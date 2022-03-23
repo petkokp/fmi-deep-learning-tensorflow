@@ -53,7 +53,18 @@ class LinearClassifier(object):
       # Hint: Use np.random.choice to generate indices. Sampling with         #
       # replacement is faster than sampling without replacement.              #
       #########################################################################
-      pass
+      # generate batch_size number of random indices
+      # sample with replacement since it is faster than sampling without replacement
+      indices = np.random.choice(num_train, batch_size, replace=True)
+
+      # make a mini-batch
+      X_batch, y_batch = X[indices], y[indices] 
+
+      # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+
+      # evaluate loss and gradient
+      loss, grad = self.loss(X_batch, y_batch, reg)
+      loss_history.append(loss)
       #########################################################################
       #                       END OF YOUR CODE                                #
       #########################################################################
@@ -67,7 +78,7 @@ class LinearClassifier(object):
       # TODO:                                                                 #
       # Update the weights using the gradient and the learning rate.          #
       #########################################################################
-      pass
+      self.W -= learning_rate * grad
       #########################################################################
       #                       END OF YOUR CODE                                #
       #########################################################################
@@ -96,7 +107,11 @@ class LinearClassifier(object):
     # TODO:                                                                   #
     # Implement this method. Store the predicted labels in y_pred.            #
     ###########################################################################
-    pass
+    # generate the model's prediction
+    # X.shape is (N, D) and self.W.shape is (D, C)
+    # also, get the index corresponding to the max score across all classes 
+    # for all traning examples
+    y_pred = X.dot(self.W).argmax(axis = 1) 
     ###########################################################################
     #                           END OF YOUR CODE                              #
     ###########################################################################

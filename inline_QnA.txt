@@ -1,4 +1,0 @@
-1. Either this is an observation from a class not in the training data set, or is at least very different from all/most of the training data, probably in terms of background color.
-
-
-2. This training data point doesn’t have any similar points in the test set.
