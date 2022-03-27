@@ -41,7 +41,6 @@ def svm_loss_naive(W, X, y, reg):
   # Right now the loss is a sum over all training examples, but we want it
   # to be an average instead so we divide by num_train.
   loss /= num_train
-  dW /= num_train
 
   # Add regularization to the loss.
   loss += reg * np.sum(W * W)
@@ -54,8 +53,8 @@ def svm_loss_naive(W, X, y, reg):
   # loss is being computed. As a result you may need to modify some of the    #
   # code above to compute the gradient.                                       #
   #############################################################################
-  
-  dW += 2 * reg * W
+  dW /= num_train
+  dW += reg * W
 
   return loss, dW
 
@@ -74,31 +73,14 @@ def svm_loss_vectorized(W, X, y, reg):
   # Implement a vectorized version of the structured SVM loss, storing the    #
   # result in loss.                                                           #
   #############################################################################
-  # compute the loss and the gradient
-  num_classes = W.shape[1]
+  classes = W.shape[1]
   num_train = X.shape[0]
-  loss = 0.0
-  scores = X.dot(W) #dims: N x C
-  correct_class_score = scores[:, y]
+  scores = X.dot(W)
 
-  # convert correct_class_scores to a column vector
   correct_class_scores = scores[np.arange(num_train), y].reshape(-1, 1)
-
-  # hinge loss
-  margin = np.maximum(0, scores - correct_class_scores + 1) # note delta = 1
-
-  # set loss of the correct class to be 0
-  margin[np.arange(num_train), y] = 0 
-
-  # loss is summed over all examples and classes since loss is one number
-  loss = np.sum(margin)
-
-  # Right now the loss is a sum over all training examples, but we want it
-  # to be an average instead so we divide by num_train.
-  loss /= num_train
-
-  # Add regularization to the loss.
-  loss += reg * np.sum(W * W)
+  margins = np.maximum(0, scores - correct_class_scores + 1)
+  margins[np.arange(num_train), y] = 0
+  loss = np.sum(margins) / float(num_train) + reg * np.sum(W * W)
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -113,25 +95,13 @@ def svm_loss_vectorized(W, X, y, reg):
   # to reuse some of the intermediate values that you used to compute the     #
   # loss.                                                                     #
   #############################################################################
-  # compute input mask
-  valid_margin_mask = np.zeros(margin.shape) # margin.shape is N x C
-  valid_margin_mask[margin > 0] = 1 # if margin is positive, set a positive mask
+  d_margins = np.zeros((num_train, classes))
+  d_margins[margins > 0] = 1
+  d_margins[np.arange(num_train), y] = 0
+  d_margins[np.arange(num_train), y] = - np.sum(d_margins, axis=1)
 
-  # subtract in correct class (-s_y) aka valid_margin_count
-  valid_margin_mask[np.arange(num_train), y] = -np.sum(valid_margin_mask, axis=1)
-
-  # since scores = X.dot(W), and valid_margin_mask is a function of margin,
-  # which is a function of scores, we get dW by multiplying X.T and valid_margin_mask
-  # W is D x C so dW should also match those dimensions
-  # X.T x valid_margin_mask = (D x N) x (N x C) = D x C
-  dW = X.T.dot(valid_margin_mask) # X.T.shape is D x N and valid_margin_mask.shape is N x C
-
-  # Right now the gradient is a sum over all training examples, but we want it
-  # to be an average instead so we divide by num_train.
-  dW /= num_train
-
-  # Add regularization loss to the gradient
-  dW += 2 * reg * W
+  dW = X.T.dot(d_margins)
+  dW = dW / float(num_train) + reg * W
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################

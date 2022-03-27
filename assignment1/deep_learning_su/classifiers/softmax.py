@@ -30,28 +30,24 @@ def softmax_loss_naive(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  num_classes = W.shape[1]
-  num_train = X.shape[0]
+  classes = W.shape[1]
+  train = X.shape[0]
 
-  for i in xrange(num_train):
+  for i in xrange(train):
     scores = X[i].dot(W)
-
     log_c = np.exp(- scores.max())
+    scores_exp = log_c * np.exp(scores)
+    scores_sum = np.sum(scores_exp)
+    probabilities = scores_exp / scores_sum
+    loss += - np.log(probabilities[y[i]])
 
-    exp_scores = log_c * np.exp(scores)
+    for j in xrange(classes):
+      dW[:, j] += (probabilities[j] - (j == y[i])) * X[i]
 
-    scores_sum = np.sum(exp_scores)
-
-    probs = exp_scores / scores_sum
-    loss += - np.log(probs[y[i]])
-
-    for j in xrange(num_classes):
-      dW[:, j] += (probs[j] - (j == y[i])) * X[i]
-
-  loss /= num_train
+  loss /= train
   loss += 0.5 * reg * np.sum(W * W)
 
-  dW /= num_train
+  dW /= train
   dW += reg * W
   #############################################################################
   #                          END OF YOUR CODE                                 #
@@ -76,20 +72,20 @@ def softmax_loss_vectorized(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  num_train = X.shape[0]
-  num_classes = W.shape[1]
+  train = X.shape[0]
+  classes = W.shape[1]
     
   scores = X.dot(W)
 
-  probs = np.exp(scores - np.max(scores, axis=1, keepdims=True))
-  probs /= np.sum(probs, axis=1, keepdims=True)
-  loss = -np.sum(np.log(probs[np.arange(num_train), y])) / num_train
-  loss /= num_train
+  probabilities = np.exp(scores - np.max(scores, axis=1, keepdims=True))
+  probabilities /= np.sum(probabilities, axis=1, keepdims=True)
+  loss = - np.sum(np.log(probabilities[np.arange(train), y])) / train
+  loss /= train
   loss += 0.5 * reg * np.sum(W * W)
 
-  probs[np.arange(num_train), y] -= 1
-  dW = X.T.dot(probs)
-  dW /= num_train
+  probabilities[np.arange(train), y] -= 1
+  dW = X.T.dot(probabilities)
+  dW /= train
   dW += reg * W
   #############################################################################
   #                          END OF YOUR CODE                                 #
